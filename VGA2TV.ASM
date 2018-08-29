@@ -1,5 +1,5 @@
 ;******************************************
-;*** PROGRAM VGA2TV - CEZARY SIWON      ***
+;*    PROGRAM VGA2TV - CEZARY SIWON       *
 ;******************************************
 
 .286C
@@ -280,12 +280,12 @@ MODE            dw      0
 SEGBIOS         equ     40h
 OFSBIOS         equ     0A8h
 HOOK10          equ     10h
-OLDVPTo         dw      ?               ;odl pointer to SPT BIOS VGA
+OLDVPTo         dw      ?		; old pointer to SPT BIOS VGA
 OLDVPTs         dw      ?
 old10o  	dw 0
 old10s  	dw 0
-                dw 'TV'     ; 'TV' - for instalation checking
-                            ; 
+                dw 'TV'     		; 'TV' - for instalation checking
+                            		 
 NEWBIOS_Trident:
      pushf
      call dword ptr cs:[old10o]
@@ -412,19 +412,19 @@ Install:
         cld
         rep movsw
         push cs
-        pop ds                           ; przeslanie tablicy wskaznikow
+        pop ds                           
         mov si, offset VTABLE
-        mov word ptr cs:VPT+2, cs        ; new address
+        mov word ptr cs:VPT+2, cs       ; new address
         mov word ptr cs:VPT, si
 
-        mov ax, 0F00h               	 ; save VGA mode
+        mov ax, 0F00h               	; save VGA mode
         int 10h
         mov word ptr cs:MODE, ax
         push cs
         pop es
 	mov ax, es
 	mov ds, ax
-        mov dx, offset Colors             ;save color pallet
+        mov dx, offset Colors		; save color pallet
         mov cx, 0FFh
         mov ah, 10
         mov al, 17h
@@ -461,7 +461,7 @@ Install:
         or al, 80h
         int 10h
 
-        mov  ax, 3500h+HOOK10            ; load and save 8h old procedure address
+        mov  ax, 3500h+HOOK10           ; load and save 8h old procedure address
         int  21h                         
         mov  cs:Old10s,es                
         mov  cs:Old10o,bx
