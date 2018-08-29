@@ -280,13 +280,12 @@ MODE            dw      0
 SEGBIOS         equ     40h
 OFSBIOS         equ     0A8h
 HOOK10          equ     10h
-OLDVPTo         dw      ?               ;stary wskazin do SPT BIOS VGA
+OLDVPTo         dw      ?               ;odl pointer to SPT BIOS VGA
 OLDVPTs         dw      ?
-old10o  dw 0
-old10s  dw 0
-                dw 'TV'     ;'TV' - do sprawdzenia, czy program jest
-                            ;juz zainstalowany
-
+old10o  	dw 0
+old10s  	dw 0
+                dw 'TV'     ; 'TV' - for instalation checking
+                            ; 
 NEWBIOS_Trident:
      pushf
      call dword ptr cs:[old10o]
@@ -386,13 +385,13 @@ FINITO:
 
 ;----------------------------------------------
 Install:
-        call Czy_juz_jest            ;sprawdz, czy program juz
-                                     ;jest zainstalowany
+        call Czy_juz_jest            	;check if program is installed
+                                     	;
         push cs
         pop  ds
         mov  dx, offset Hej
         mov  ah,09h
-        int  21h                 ;wypisz komunikat
+        int  21h                 	;print message
 
         mov ax, SEGBIOS
         mov es, ax
@@ -401,37 +400,37 @@ Install:
         mov word ptr cs:OLDVPTs, ax
         mov ax, es:[bx]
         mov word ptr cs:OLDVPTo, ax
-        mov si, ax                               ; do si offset zrodla
+        mov si, ax                       
         push cs
         pop ds
         mov di, offset VPT
         mov ax, es:[bx+2]
         push cs
         pop es
-        mov ds, ax                               ; do es segment przeznaczenia
+        mov ds, ax                       
         mov cx, 0Ah
         cld
         rep movsw
         push cs
-        pop ds                                   ; przeslanie tablicy wskaznikow
+        pop ds                           ; przeslanie tablicy wskaznikow
         mov si, offset VTABLE
-        mov word ptr cs:VPT+2, cs                ; ustawienie nowego adresu
+        mov word ptr cs:VPT+2, cs        ; new address
         mov word ptr cs:VPT, si
 
-        mov ax, 0F00h               ;zapamietujemy tryb VGA
+        mov ax, 0F00h               	 ; save VGA mode
         int 10h
         mov word ptr cs:MODE, ax
         push cs
         pop es
 	mov ax, es
 	mov ds, ax
-        mov dx, offset Colors                 ;zapamietujemy palete kolorow
+        mov dx, offset Colors             ;save color pallet
         mov cx, 0FFh
         mov ah, 10
         mov al, 17h
         xor bx, bx
         int 10h
-        mov ax, SEGBIOS             ;
+        mov ax, SEGBIOS             
         mov es, ax
         mov bx, OFSBIOS
         push cs
@@ -440,7 +439,7 @@ Install:
         mov ax, offset VPT
         mov word ptr es:[bx], ax
 
-        mov dx, 3DAh                    ; czekamy na powrot pionowy
+        mov dx, 3DAh                    ; wait for vertical return
      op:
         in al, dx
         test al, 1000b
@@ -450,50 +449,50 @@ Install:
         pop ds
         mov ax, ds
         mov es, ax
-        mov dx, offset cs:Colors       ; odtwarzamy palete kolorow
+        mov dx, offset cs:Colors        ; restore color pallet
         mov cx, 0FFh
         mov ah, 10h
         mov al, 12h
         xor bx, bx
-        int 10h                          ;ustawienie nowej tablicy dla VGA BIOS
+        int 10h                         ; new table for VGA BIOS
 
-        mov ax, word ptr cs:MODE        ; ustawiamy ponownie tryb VGA
+        mov ax, word ptr cs:MODE        ; set again VGA mode
         mov ah, 0
         or al, 80h
         int 10h
 
-        mov  ax, 3500h+HOOK10            ;odczytaj adres procedury
-        int  21h                         ;obslugi przerwania 8h
-        mov  cs:Old10s,es                ;i zapamietaj go
+        mov  ax, 3500h+HOOK10            ; load and save 8h old procedure address
+        int  21h                         
+        mov  cs:Old10s,es                
         mov  cs:Old10o,bx
         push cs
         pop ds
-        mov  dx, offset NewBios_Trident       ;ustaw nowy adres procedury
-        mov  ax, 2500h +HOOK10                     ;obslugi przerwania
+        mov  dx, offset NewBios_Trident  ; set new 8h procedure address
+        mov  ax, 2500h +HOOK10           
         int  21h
        
-        mov  dx, offset install      ;wyjdz i zostaw wszystko przed
-        int  27h                     ;adresem INSTALL
+        mov  dx, offset install      	 ; quit and leave before INSTALL address
+        int  27h                     	 
 
 ;--------------------------------
 Czy_juz_jest:
         mov  ax,3500h+HOOK10
         int  21h
-        cmp  es:[bx-2],'TV'   ;Sprawdz, czy przed procedura
-                              ;obslugi przerwania znajduje sie
-                              ;'TV'
-        jne  Nie_ma           ;jesli nie, to instaluj
-        jmp  Czy_parametry    ;jesli tak, to sprawdz paramerty
+        cmp  es:[bx-2],'TV'   		 ; Check if program is installed 
+                              		 
+                              		 
+        jne  Nie_ma           		 ; not installed, let's install
+        jmp  Czy_parametry    		 ; check parameters
 Nie_ma:
         ret
 ;--------------------------------
 Czy_parametry:
-        mov  bx,80h                  ;pobierz licznik
-        mov  cl,[bx]                 ;parametrow
+        mov  bx,80h                  	 ; load parameter counter
+        mov  cl,[bx]                 	 
         cmp  cl,0
         je   Bez_prm
-        jmp  Usun                   ;jesli jest, to usun program
-                                    ;z pamieci
+        jmp  Usun                   	 ; if there is parameter remove program
+                                    	 
 Bez_prm:
         push cs
         pop  ds
@@ -511,7 +510,7 @@ Usun:
         pop es
 	mov ax, es
 	mov ds, ax
-        mov dx, offset Colors          ;zapamietujemy palete kolorow
+        mov dx, offset Colors           ; save color pallete
         mov cx, 0FFh
         mov ah, 10h
         mov al, 17h
@@ -521,10 +520,10 @@ Usun:
         mov ds, ax
         mov si, OFSBIOS
         mov ax, 3500h+HOOK10
-        int 21h           ;pobierz adres procedury obslugi 8h
-                           ;obslugi
+        int 21h           		; restore 8h procedure address
+                           
 
-        mov ax, es:[bx-8]          ;odtwarzamy adres pierwotnej tablicy VGA BIOS
+        mov ax, es:[bx-8]          	; restore old address of VGA BIOS table
         mov word ptr ds:[si+2], ax
         mov ax, es:[bx-10]
         mov word ptr ds:[si], ax
@@ -535,7 +534,7 @@ Usun:
         test al, 1000b
         jz op2
 
-        mov al, 0Dh             ; dzielnik czestotliwosci punktu = 1
+        mov al, 0Dh             	 ; frequency devider
         mov dx, 3C4h
         out dx, al
         inc dx
@@ -554,29 +553,29 @@ Usun:
         pop ds
         mov ax, ds
         mov es, ax
-        mov dx, offset Colors          ; odtwarzamy palete kolorow
+        mov dx, offset Colors           ; restore color pallete
         mov cx, 0FFh
         mov ah, 10h
         mov al, 12h
         xor bx, bx
         int 10h
 
-        pop ax                  ; ustawiamy ponownie tryb VGA
+        pop ax                  	 ; restore VGA mode
         mov ah, 0
         or al, 80h
         int 10h
 
         mov  ax,3500h+HOOK10
-        int  21h           ;pobierz adres procedury obslugi 8h
-                           ;obslugi
+        int  21h           		 ; load old address of 8h procedure
+                           		 
 
-        mov  ds,es:[bx-4]  ;ustaw adres poprzedniej procedury
-                           ;obslugi
+        mov  ds,es:[bx-4]  		 ; set old procedure for 8h interrupt
+                           		 
         mov  dx,es:[bx-6]
         mov  ax,2500h+HOOK10
         int  21h
-        mov  ah,49h        ;zwolnij pamiec zajmowana przez
-                              ;program
+        mov  ah,49h        		 
+                              	 	 
         int  21h
         push cs
         pop  ds
